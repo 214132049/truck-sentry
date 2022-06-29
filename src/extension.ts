@@ -22,6 +22,15 @@ function pathExists(p: string): boolean {
 	return true;
 }
 
+function getConfig() {
+	const config = vscode.workspace.getConfiguration('truck-sentry');
+	return config || {};
+}
+
+function string2Array(str: string) {
+	return str.split(';').map(v => v.trim()).filter(Boolean);
+}
+
 function getLocalInfoFormPackage(rootPath: string): LocalInfo | null {
 	const labels = ['@truck-sentry/vue', '@truck-sentry/react', '@truck-sentry/browser'];
 
@@ -42,7 +51,15 @@ function getLocalInfoFormPackage(rootPath: string): LocalInfo | null {
 }
 
 function getLocalInfoFormLink(rootPath: string): LocalInfo | null {
-	const linkPaths = ['index.ejs', 'index.html', 'src/index.ejs', 'src/index.html', 'src/public/index.ejs', 'src/public/index.html'];
+	const defaultPath = ['', 'src/', 'src/public/'];
+	const defaultName = ['index.ejs', 'index.tpl', 'index.html'];
+
+	const {name: _name, path: _path} = getConfig();
+	
+	const finalPath = _path ? string2Array(_path) : defaultPath;
+	const finalName = _name ? string2Array(_name) :defaultName;
+
+	const linkPaths = finalPath.map((path: string) => finalName.map((name: string) => path + name)).flat();
 
 	for(let i = 0; i < linkPaths.length; i++) {
 		const templatePath = path.join(rootPath, linkPaths[i]);
@@ -50,6 +67,7 @@ function getLocalInfoFormLink(rootPath: string): LocalInfo | null {
 		if (!pathExists(templatePath)) {
 			continue;
 		}
+		
 		const template = fs.readFileSync(templatePath, 'utf-8');
 
 		const match = template.match(/@truck-sentry\/(.+)(?=\/bundle)/);

@@ -13,13 +13,29 @@
 		"Other"
 	],
 	"activationEvents": [
-		"workspaceContains:*"
+		"workspaceContains:*",
+		"onStartupFinished"
 	],
 	"main": "./dist/extension.js",
 	"icon": "images/icon.png",
 	"repository": "https://github.com/214132049/truck-sentry",
 	"contributes": {
-		"commands": []
+		"commands": [],
+		"configuration": {
+			"title": "Truck Sentry 配置",
+			"properties": {
+				"truck-sentry.path": {
+					"type": "string",
+					"default": "/; src/; src/public/",
+					"description": "模板文件所在路径"
+				},
+				"truck-sentry.name": {
+					"type": "string",
+					"default": "index.ejs; index.tpl; index.html",
+					"description": "模板文件名"
+				}
+			}
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "yarn run package",
