@@ -1,7 +1,7 @@
 {
 	"name": "truck-sentry",
-	"displayName": "truck-sentry",
-	"description": "truck-sentry sdk版本检测及更新通知",
+	"displayName": "Truck Sentry Update Helper",
+	"description": "Truck sentry SDK 版本检测、更新助手",
 	"version": "0.0.1",
 	"author": {
 		"name": "wenli.li"

@@ -9,7 +9,7 @@ type LocalInfo = {
 	type: string
 };
 
-const channel = vscode.window.createOutputChannel('truck-sentry');
+const channel = vscode.window.createOutputChannel('TruckSentry');
 
 function pathExists(p: string): boolean {
 	try {
@@ -93,7 +93,6 @@ function getOriginVersion(type: string): Promise<string> {
 }
 
 export async function activate(context: vscode.ExtensionContext) {
-	channel.appendLine('Congratulations, your extension "truck-sentry" is now active!');
 	try {
 		const folders = vscode.workspace.workspaceFolders;
 
@@ -108,7 +107,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		const lVersion = await getOriginVersion(type);
 
 		if (version === lVersion) {
-			channel.appendLine('版本一致不提示');
 			return;
 		}
 
