@@ -1,25 +1,136 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
+const opn = require('opn');
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-	
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "truck-sentry" is now active!');
+type LocalInfo = {
+	version: string,
+	type: string
+};
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('truck-sentry.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from truck-sentry!');
-	});
+const channel = vscode.window.createOutputChannel('truck-sentry');
 
-	context.subscriptions.push(disposable);
+function pathExists(p: string): boolean {
+	try {
+		fs.accessSync(p);
+	} catch (err) {
+		return false;
+	}
+	return true;
+}
+
+function getLocalInfoFormPackage(rootPath: string): LocalInfo | null {
+	const labels = ['@truck-sentry/browser', '@truck-sentry/react', '@truck-sentry/vue'];
+
+	for(let i = 0; i < labels.length; i++) {
+
+		const packageJsonPath = path.join(rootPath, 'node_modules', labels[i], 'package.json');
+
+		if (!pathExists(packageJsonPath)) {
+			continue;
+		}
+
+		const {name, version} = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+
+		return {version, type: name};
+	}
+
+	return null;
+}
+
+function getLocalInfoFormLink(rootPath: string): LocalInfo | null {
+	const linkPaths = ['index.ejs', 'index.html', 'src/index.ejs', 'src/index.html', 'src/public/index.ejs', 'src/public/index.html'];
+
+	for(let i = 0; i < linkPaths.length; i++) {
+		const templatePath = path.join(rootPath, linkPaths[i]);
+
+		if (!pathExists(templatePath)) {
+			continue;
+		}
+		const template = fs.readFileSync(templatePath, 'utf-8');
+
+		const match = template.match(/@truck-sentry\/(.+)(?=\/bundle)/);
+
+		if (!match) {
+			break;
+		}
+
+		const [module, name, version] = match[0].split('/');
+
+		return {
+			version: version.replace('v', ''),
+			type: [module, name].join('/')
+		};
+	}
+	return null;
+}
+
+
+function getLocalVersion(rootPath: string | undefined): LocalInfo | null {
+
+	if (!rootPath) {
+		vscode.window.showInformationMessage('No dependency in empty workspace');
+		return null;
+	}
+
+	let info = getLocalInfoFormLink(rootPath);
+
+	if (!info) {
+		info = getLocalInfoFormPackage(rootPath);
+	}
+
+	if (!info) {
+		channel.appendLine('没有找到@truck-sentry相关内容');
+	}
+
+	return info;
+}
+
+function getOriginVersion(type: string): Promise<string> {
+	const uri = 'https://npm.amh-group.com/-/verdaccio/data/sidebar/' + type;
+	return axios.get(uri).then(({data}) => data?.latest?.version);
+}
+
+export async function activate(context: vscode.ExtensionContext) {
+	channel.appendLine('Congratulations, your extension "truck-sentry" is now active!');
+	try {
+		const folders = vscode.workspace.workspaceFolders;
+
+		const rootPath = folders && folders.length > 0 ? folders[0].uri.fsPath: undefined;
+
+		const {version, type} = getLocalVersion(rootPath) || ({} as LocalInfo);
+
+		if (!type) {
+			return;
+		}
+
+		const lVersion = await getOriginVersion(type);
+
+		if (version === lVersion) {
+			channel.appendLine('版本一致不提示');
+			return;
+		}
+
+		const res = await vscode.window.showInformationMessage(
+			`${type} 已发布新版本，您的当前版本:${version}，最新版本:${lVersion}。`,
+			'查看更新内容'
+		);
+
+		if(!res) {
+			return;
+		}
+
+		const uri = 'https://techface.amh-group.com/doc/1504#%E6%9B%B4%E6%96%B0%E6%97%A5%E5%BF%97';
+
+		opn(uri, { app: '' }).catch(() => {
+			vscode.window.showErrorMessage('打开浏览器失败，请手动打开:' + uri);
+		});
+	} catch(e) {
+		channel.appendLine((e as Error).message);
+	} finally {
+		channel.show();
+	}
 }
 
 // this method is called when your extension is deactivated
