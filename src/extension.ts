@@ -106,11 +106,11 @@ export async function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		const ignoreVersions = context.workspaceState.get(storeKey, new Set()) as Set<string>;
+		const ignoreVersions = context.workspaceState.get(storeKey, []) as Array<string>;
 
 		const latestVersion = await getOriginVersion(type);
 
-		if (version === latestVersion || ignoreVersions.has(latestVersion)) {
+		if (version === latestVersion || ignoreVersions.includes(latestVersion)) {
 			return;
 		}
 
@@ -125,7 +125,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		if (res === '忽略') {
-			context.workspaceState.update(storeKey, ignoreVersions.add(latestVersion));
+			context.workspaceState.update(storeKey, ignoreVersions.concat(latestVersion));
 			return;
 		}
 
