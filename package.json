@@ -16,7 +16,7 @@
 		"workspaceContains:*"
 	],
 	"main": "./dist/extension.js",
-	"repository": "",
+	"repository": "https://github.com/214132049/truck-sentry",
 	"contributes": {
 		"commands": []
 	},
