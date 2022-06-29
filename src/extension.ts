@@ -51,7 +51,7 @@ function getLocalInfoFormPackage(rootPath: string): LocalInfo | null {
 }
 
 function getLocalInfoFormLink(rootPath: string): LocalInfo | null {
-	const defaultPath = ['', 'src/', 'src/public/'];
+	const defaultPath = ['', 'src/', 'public/'];
 	const defaultName = ['index.ejs', 'index.tpl', 'index.html'];
 
 	const {name: _name, path: _path} = getConfig();
