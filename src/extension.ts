@@ -9,6 +9,8 @@ type LocalInfo = {
 	type: string
 };
 
+const storeKey = '__truck_sentry_ignore_version__';
+
 const channel = vscode.window.createOutputChannel('TruckSentry');
 
 function pathExists(p: string): boolean {
@@ -104,18 +106,26 @@ export async function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		const lVersion = await getOriginVersion(type);
+		const ignoreVersions = context.workspaceState.get(storeKey, new Set()) as Set<string>;
 
-		if (version === lVersion) {
+		const latestVersion = await getOriginVersion(type);
+
+		if (version === latestVersion || ignoreVersions.has(latestVersion)) {
 			return;
 		}
 
 		const res = await vscode.window.showInformationMessage(
-			`${type} 已发布新版本，您的当前版本:${version}，最新版本:${lVersion}。`,
-			'查看更新内容'
+			`${type} 已发布新版本，您的当前版本:${version}，最新版本:${latestVersion}。`,
+			'查看更新',
+			'忽略'
 		);
 
 		if(!res) {
+			return;
+		}
+
+		if (res === '忽略') {
+			context.workspaceState.update(storeKey, ignoreVersions.add(latestVersion));
 			return;
 		}
 
