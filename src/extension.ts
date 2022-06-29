@@ -117,14 +117,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		const res = await vscode.window.showInformationMessage(
 			`${type} 已发布新版本，您的当前版本:${version}，最新版本:${latestVersion}。`,
 			'查看更新',
-			'忽略'
+			'跳过此版本'
 		);
 
 		if(!res) {
 			return;
 		}
 
-		if (res === '忽略') {
+		if (res === '跳过此版本') {
 			context.workspaceState.update(storeKey, ignoreVersions.concat(latestVersion));
 			return;
 		}
