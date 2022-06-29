@@ -21,7 +21,7 @@ function pathExists(p: string): boolean {
 }
 
 function getLocalInfoFormPackage(rootPath: string): LocalInfo | null {
-	const labels = ['@truck-sentry/browser', '@truck-sentry/react', '@truck-sentry/vue'];
+	const labels = ['@truck-sentry/vue', '@truck-sentry/react', '@truck-sentry/browser'];
 
 	for(let i = 0; i < labels.length; i++) {
 
