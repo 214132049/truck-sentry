@@ -38,6 +38,8 @@ function getLocalInfoFormPackage(rootPath: string): LocalInfo | null {
 
 		const packageJsonPath = path.join(rootPath, 'node_modules', labels[i], 'package.json');
 
+		channel.appendLine(`正从文件${packageJsonPath}获取版本`);
+
 		if (!pathExists(packageJsonPath)) {
 			continue;
 		}
@@ -62,7 +64,10 @@ function getLocalInfoFormLink(rootPath: string): LocalInfo | null {
 	const linkPaths = finalPath.map((path: string) => finalName.map((name: string) => path + name)).flat();
 
 	for(let i = 0; i < linkPaths.length; i++) {
+
 		const templatePath = path.join(rootPath, linkPaths[i]);
+
+		channel.appendLine(`正从文件${templatePath}获取版本`);
 
 		if (!pathExists(templatePath)) {
 			continue;
@@ -87,11 +92,10 @@ function getLocalInfoFormLink(rootPath: string): LocalInfo | null {
 }
 
 
-function getLocalVersion(rootPath: string | undefined): LocalInfo | null {
+function getLocalVersion(rootPath: string | undefined): LocalInfo {
 
 	if (!rootPath) {
-		vscode.window.showInformationMessage('No dependency in empty workspace');
-		return null;
+		throw new Error('根路径不存在');
 	}
 
 	let info = getLocalInfoFormLink(rootPath);
@@ -101,7 +105,7 @@ function getLocalVersion(rootPath: string | undefined): LocalInfo | null {
 	}
 
 	if (!info) {
-		channel.appendLine('没有找到@truck-sentry相关内容');
+		throw new Error('没有找到@truck-sentry相关内容');
 	}
 
 	return info;
@@ -118,16 +122,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const rootPath = folders && folders.length > 0 ? folders[0].uri.fsPath: undefined;
 
-		const {version, type} = getLocalVersion(rootPath) || ({} as LocalInfo);
+		const {version, type} = getLocalVersion(rootPath);
 
-		if (!type) {
-			return;
-		}
-
-		const ignoreVersions = context.workspaceState.get(storeKey, []) as Array<string>;
+		channel.appendLine(`当前版本:${version}`);
 
 		const latestVersion = await getOriginVersion(type);
 
+		channel.appendLine(`最新版本:${latestVersion}`);
+
+		const ignoreVersions = context.workspaceState.get(storeKey, []) as Array<string>;
+
+		channel.appendLine(`已跳过的版本:${JSON.stringify(ignoreVersions)}`);
+		
 		if (version === latestVersion || ignoreVersions.includes(latestVersion)) {
 			return;
 		}
@@ -154,8 +160,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		});
 	} catch(e) {
 		channel.appendLine((e as Error).message);
-	} finally {
-		channel.show();
 	}
 }
 
